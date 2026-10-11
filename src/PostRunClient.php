@@ -16,7 +16,10 @@ class PostRunClient
 
     protected string $endpoint;
 
-    public function __construct(string $apiKey, string $endpoint = 'https://postrun.io')
+    /**
+     * @param  array<string, mixed>  $httpOptions  Extra Guzzle client options, e.g. a custom handler.
+     */
+    public function __construct(string $apiKey, string $endpoint = 'https://postrun.io', array $httpOptions = [])
     {
         $this->apiKey = $apiKey;
         $this->endpoint = rtrim($endpoint, '/');
@@ -29,6 +32,7 @@ class PostRunClient
                 'Content-Type' => 'application/json',
             ],
             'timeout' => 30,
+            ...$httpOptions,
         ]);
     }
 
@@ -44,11 +48,13 @@ class PostRunClient
      *     text?: string,
      *     tags?: string[],
      *     meta?: array<string, mixed>,
+     *     priority?: Priority|string,
      *     attachments?: array<array{filename: string, content: string, mime_type?: string}>
      * } $message
-     * @return array{message_id: string, status: string}
+     * @return array{message_id: string, status: string, priority: string}
      *
      * @throws PostRunException
+     * @throws \InvalidArgumentException When the priority is not a known priority.
      */
     public function send(array $message): array
     {
@@ -68,14 +74,20 @@ class PostRunClient
      *     text?: string,
      *     tags?: string[],
      *     meta?: array<string, mixed>,
+     *     priority?: Priority|string,
      *     attachments?: array<array{filename: string, content: string, mime_type?: string}>
      * } $message
      * @return array{messages: array, total: int}
      *
      * @throws PostRunException
+     * @throws \InvalidArgumentException When the priority is not a known priority.
      */
     public function sendBatch(array $recipients, array $message): array
     {
+        if (isset($message['priority'])) {
+            $message['priority'] = Priority::fromValue($message['priority'])->value;
+        }
+
         $payload = array_merge($message, [
             'recipients' => $recipients,
         ]);
@@ -345,6 +357,10 @@ class PostRunClient
                     $payload[$field] = $message[$field];
                 }
             }
+        }
+
+        if (isset($message['priority'])) {
+            $payload['priority'] = Priority::fromValue($message['priority'])->value;
         }
 
         return array_filter($payload, fn ($v) => $v !== null);

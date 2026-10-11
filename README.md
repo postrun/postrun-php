@@ -36,6 +36,23 @@ $result = $client->send([
 echo "Message sent! ID: " . $result['message_id'];
 ```
 
+### Set a Priority
+
+When your sending provider is at its rate limit, PostRun sends the highest priority waiting message first. Use `high` for mail that must arrive quickly (password resets, sign-ups, receipts) and `low` for mail that can wait (digests, newsletters). Messages without a priority use the domain's default priority.
+
+```php
+use PostRun\Priority;
+
+$client->send([
+    'to' => 'recipient@example.com',
+    'subject' => 'Reset your password',
+    'html' => '<p>Click the link to reset your password.</p>',
+    'priority' => Priority::High, // or 'high', 'normal', 'low'
+]);
+```
+
+An unknown priority throws an `InvalidArgumentException` before anything is sent. `sendBatch()` accepts the same `priority` key in its message.
+
 ### Send with Attachments
 
 ```php
