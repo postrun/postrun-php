@@ -100,6 +100,45 @@ class PostRunClientTest extends TestCase
         $this->assertCount(2, $payload['recipients']);
     }
 
+    public function test_send_includes_custom_headers(): void
+    {
+        $headers = [
+            'List-Unsubscribe' => '<https://example.com/u/abc>',
+            'List-Unsubscribe-Post' => 'List-Unsubscribe=One-Click',
+        ];
+
+        $this->client()->send([
+            'to' => 'user@example.com',
+            'subject' => 'Weekly digest',
+            'html' => '<p>Digest</p>',
+            'headers' => $headers,
+        ]);
+
+        $this->assertSame($headers, $this->sentPayload()['headers']);
+    }
+
+    public function test_send_leaves_headers_out_when_none_are_given(): void
+    {
+        $this->client()->send(['to' => 'user@example.com', 'subject' => 'Hello']);
+
+        $this->assertArrayNotHasKey('headers', $this->sentPayload());
+    }
+
+    public function test_send_batch_includes_shared_and_recipient_headers(): void
+    {
+        $this->client()->sendBatch(
+            [
+                ['to_email' => 'one@example.com', 'headers' => ['List-Unsubscribe' => '<https://example.com/u/one>']],
+                ['to_email' => 'two@example.com'],
+            ],
+            ['subject' => 'Newsletter', 'html' => '<p>News</p>', 'headers' => ['X-Campaign' => 'launch']],
+        );
+
+        $payload = $this->sentPayload();
+        $this->assertSame(['X-Campaign' => 'launch'], $payload['headers']);
+        $this->assertSame(['List-Unsubscribe' => '<https://example.com/u/one>'], $payload['recipients'][0]['headers']);
+    }
+
     public function test_requests_still_authenticate_with_custom_http_options(): void
     {
         $this->client()->send(['to' => 'user@example.com', 'subject' => 'Hello']);

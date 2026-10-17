@@ -70,6 +70,24 @@ $result = $client->send([
 ]);
 ```
 
+### Send with Custom Headers
+
+Pass headers such as `List-Unsubscribe` in `headers`; PostRun sends them along to the email provider. Gmail and Yahoo require `List-Unsubscribe` and `List-Unsubscribe-Post` (one-click unsubscribe) on bulk mail.
+
+```php
+$result = $client->send([
+    'to' => 'recipient@example.com',
+    'subject' => 'Weekly digest',
+    'html' => '<p>This week...</p>',
+    'headers' => [
+        'List-Unsubscribe' => '<https://example.com/unsubscribe/abc123>, <mailto:unsubscribe@example.com>',
+        'List-Unsubscribe-Post' => 'List-Unsubscribe=One-Click',
+    ],
+]);
+```
+
+PostRun accepts `List-Unsubscribe`, `List-Unsubscribe-Post`, `List-Id`, `In-Reply-To`, `References`, `Precedence`, `Auto-Submitted` and your own `X-*` headers. Other headers fail with a `ValidationException`. With `sendBatch()`, give a recipient its own `headers` to add to or replace the shared ones, e.g. a personal unsubscribe URL.
+
 ### Send Batch Emails
 
 ```php

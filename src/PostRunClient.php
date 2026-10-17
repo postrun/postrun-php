@@ -39,6 +39,10 @@ class PostRunClient
     /**
      * Send a single email message.
      *
+     * Custom headers, such as List-Unsubscribe and List-Unsubscribe-Post,
+     * go in 'headers' as header name to value; PostRun passes them on to
+     * the email provider.
+     *
      * @param array{
      *     to: array{email: string, name?: string}|string,
      *     from?: array{email: string, name?: string},
@@ -49,7 +53,8 @@ class PostRunClient
      *     tags?: string[],
      *     meta?: array<string, mixed>,
      *     priority?: Priority|string,
-     *     attachments?: array<array{filename: string, content: string, mime_type?: string}>
+     *     attachments?: array<array{filename: string, content: string, mime_type?: string}>,
+     *     headers?: array<string, string>
      * } $message
      * @return array{message_id: string, status: string, priority: string}
      *
@@ -66,7 +71,10 @@ class PostRunClient
     /**
      * Send a batch of emails.
      *
-     * @param  array<array{to_email: string, to_name?: string}>  $recipients
+     * Headers in a recipient's 'headers' add to or replace the shared
+     * 'headers' of the message, e.g. for a personal List-Unsubscribe URL.
+     *
+     * @param  array<array{to_email: string, to_name?: string, headers?: array<string, string>}>  $recipients
      * @param array{
      *     from?: array{email: string, name?: string},
      *     subject: string,
@@ -75,7 +83,8 @@ class PostRunClient
      *     tags?: string[],
      *     meta?: array<string, mixed>,
      *     priority?: Priority|string,
-     *     attachments?: array<array{filename: string, content: string, mime_type?: string}>
+     *     attachments?: array<array{filename: string, content: string, mime_type?: string}>,
+     *     headers?: array<string, string>
      * } $message
      * @return array{messages: array, total: int}
      *
@@ -344,7 +353,7 @@ class PostRunClient
         }
 
         // Copy other fields directly
-        foreach (['subject', 'html', 'text', 'html_body', 'text_body', 'tags', 'meta', 'metadata', 'attachments'] as $field) {
+        foreach (['subject', 'html', 'text', 'html_body', 'text_body', 'tags', 'meta', 'metadata', 'attachments', 'headers'] as $field) {
             if (isset($message[$field])) {
                 // Normalize body field names
                 if ($field === 'html') {
